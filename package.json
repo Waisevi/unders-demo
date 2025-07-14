@@ -11,7 +11,8 @@
     "test": "jest --watch",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "postinstall": "cp public/mockServiceWorker.js .storybook/static/"
+    "postinstall": "cp public/mockServiceWorker.js .storybook/static/",
+    "typecheck": "tsc --noEmit"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
