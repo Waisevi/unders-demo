@@ -19,6 +19,7 @@ import {
   useForm,
   FieldValues,
   FormState,
+  UseFormReturn,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnyZodObject, z, ZodObject } from 'zod';
@@ -152,7 +153,11 @@ type Props<TSchema extends ZodObject<any>> = Omit<ComponentPropsWithoutRef<'form
   /**
    * Successful form submit event callback
    */
-  onSubmit: (values: FormSubmit<TSchema>, event?: BaseSyntheticEvent) => void;
+  onSubmit: (
+    values: FormSubmit<TSchema>,
+    event?: BaseSyntheticEvent,
+    form?: UseFormReturn<any>,
+  ) => void;
 
   /**
    * Unsuccessful form submit event callback(e.g. when validation failed)
@@ -253,7 +258,10 @@ export const Form = forwardRef<FormRef, Props<any>>(
           onChange={handleFormChange}
           ref={formRef}
           data-qa={testID}
-          onSubmit={form.handleSubmit(onSubmit, onSubmitError)}
+          onSubmit={form.handleSubmit(
+            (values, event) => onSubmit(values, event, form),
+            onSubmitError,
+          )}
           noValidate
         >
           {children}
