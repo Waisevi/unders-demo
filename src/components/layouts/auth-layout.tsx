@@ -1,6 +1,9 @@
-import Route from '@/const/route';
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+
+import Route from '@/const/route';
+
 import { useSession } from '../contexts/session-context';
 
 type Props = {
@@ -23,7 +26,9 @@ export const AuthLayout = ({ children }: Props) => {
     }
   }, [isAuthenticated, router]);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return null;
+  }
 
   return <>{children}</>;
 };

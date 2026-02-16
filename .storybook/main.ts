@@ -1,29 +1,25 @@
+import path from 'node:path';
+
 import type { StorybookConfig } from '@storybook/nextjs';
-import { VanillaExtractPlugin } from '@vanilla-extract/webpack-plugin';
-import path from 'path';
 
 const config: StorybookConfig = {
-  stories: ['../src/**/*.stories.@(ts|tsx)'],
-  addons: [
-    '@storybook/addon-links',
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-    'msw-storybook-addon',
-  ],
+  addons: ['@storybook/addon-links', 'msw-storybook-addon'],
   framework: {
     name: '@storybook/nextjs',
     options: {},
   },
   staticDirs: ['static'],
+  stories: ['../src/**/*.stories.@(ts|tsx)'],
   webpackFinal: async (config) => {
-    if (!config.plugins) config.plugins = [];
-    config.plugins.push(new VanillaExtractPlugin());
+    if (!config.plugins) {
+      config.plugins = [];
+    }
 
     config.resolve = {
-      ...(config.resolve || {}),
+      ...config.resolve,
       alias: {
-        ...(config.resolve?.alias || {}),
-        '@': path.resolve(__dirname, '../src'),
+        ...config.resolve?.alias,
+        '@': path.resolve(import.meta.dirname, '../src'),
       },
     };
 

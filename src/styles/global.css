@@ -1,0 +1,19 @@
+@layer theme, base, mui, components, utilities;
+@import "tailwindcss" important;
+
+html,
+body {
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+  background-color: #eaeaea;
+  backface-visibility: hidden;
+}
+
+[role="app"] {
+  height: 100%;
+}
+
+@import './theme/tw-theme.css';

@@ -4,8 +4,8 @@ export const TestSentryButton = () => {
   const handleClick = () => {
     try {
       throw new Error('🧨 Test Sentry error from frontend');
-    } catch (err) {
-      Sentry.captureException(err);
+    } catch (error) {
+      Sentry.captureException(error);
     }
   };
 

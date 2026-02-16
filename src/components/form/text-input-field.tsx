@@ -1,36 +1,37 @@
-/* eslint-disable  */
-import { forwardRef, ChangeEvent, FocusEvent, ComponentPropsWithoutRef } from 'react';
 import { TextField } from '@mui/material';
+import { ChangeEvent, ComponentPropsWithoutRef, FocusEvent, forwardRef } from 'react';
 import { useController } from 'react-hook-form';
+
 import { MaskedInput } from './masked-input';
+
 import type { FormFieldName } from './form';
 
-type Props = Omit<ComponentPropsWithoutRef<typeof TextField>, 'name' | 'value'> & {
-  name: FormFieldName;
-  mask?: string;
+type Props = {
   hideError?: boolean;
-};
+  mask?: string;
+  name: FormFieldName;
+} & Omit<ComponentPropsWithoutRef<typeof TextField>, 'name' | 'value'>;
 
 export const TextInputField = forwardRef<HTMLInputElement, Props>(
-  ({ name, mask, hideError = false, onChange, onBlur, ...props }, ref) => {
+  ({ hideError = false, mask, name, onBlur, onChange, ...props }, ref) => {
     const { field, fieldState } = useController({ name });
 
     const error = !!fieldState.error && !hideError;
 
     const commonProps = {
       ...props,
-      inputRef: ref,
       error,
+      inputRef: ref,
 
-      value: field.value ?? '',
-      onChange: (e: ChangeEvent<HTMLInputElement>) => {
-        field.onChange(e);
-        onChange?.(e);
-      },
       onBlur: (e: FocusEvent<HTMLInputElement>) => {
         field.onBlur();
         onBlur?.(e);
       },
+      onChange: (e: ChangeEvent<HTMLInputElement>) => {
+        field.onChange(e);
+        onChange?.(e);
+      },
+      value: field.value ?? '',
     };
 
     if (mask) {
