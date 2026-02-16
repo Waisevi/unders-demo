@@ -1,14 +1,15 @@
-import type { Meta, StoryObj } from '@storybook/react';
 import { Control } from './control';
 
+import type { Meta, StoryObj } from '@storybook/react';
+
 const meta: Meta<typeof Control> = {
-  title: 'ui/Control',
-  component: Control,
   argTypes: {
-    label: { control: 'text' },
     children: { control: 'text' },
     error: { control: 'text' },
+    label: { control: 'text' },
   },
+  component: Control,
+  title: 'ui/Control',
 };
 
 export default meta;
@@ -17,16 +18,16 @@ type Story = StoryObj<typeof Control>;
 
 export const Default: Story = {
   args: {
-    label: 'Control label',
     children: 'Control contents',
     error: '',
+    label: 'Control label',
   },
 };
 
 export const WithError: Story = {
   args: {
-    label: 'Control label',
     children: 'Control contents',
     error: 'This field is required',
+    label: 'Control label',
   },
 };

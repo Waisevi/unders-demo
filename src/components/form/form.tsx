@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable react/display-name */
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   BaseSyntheticEvent,
   ChangeEvent,
@@ -13,62 +14,27 @@ import {
   useRef,
 } from 'react';
 import {
-  ValidationMode,
   FieldErrors,
-  FormProvider,
-  useForm,
   FieldValues,
+  FormProvider,
   FormState,
+  useForm,
   UseFormReturn,
+  ValidationMode,
 } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { AnyZodObject, z, ZodObject } from 'zod';
-
-/**
- * Successful form submit data
- */
-export type FormSubmit<TSchema extends AnyZodObject> = z.output<TSchema>;
-
-/**
- * Erroneous form submit data
- */
-export type FormSubmitError<TSchema extends AnyZodObject> = FieldErrors<z.output<TSchema>>;
+import { z, ZodObject } from 'zod';
 
 /**
  * Branded form field name
  */
-export type FormFieldName = string & {
+export type FormFieldName = {
   __type: 'formField';
-};
+} & string;
 
 /**
  * Imperative form handle
  */
 export type FormRef = {
-  /**
-   * Programmatically trigger form submit
-   */
-  submit: () => void;
-
-  /**
-   * Programmatically trigger form submit, receiving results in a promise
-   */
-  handleSubmit: <TFieldValues extends FieldValues>() => Promise<
-    [FieldErrors, null] | [null, TFieldValues]
-  >;
-
-  /**
-   * Returns current form values
-   */
-  getValues: <TFieldValues>() => TFieldValues;
-
-  /**
-   * Sets value of the form field
-   * @param name Field name to update
-   * @param value New field value
-   */
-  setValue: (name: FormFieldName, value: any) => void;
-
   /**
    * Clear errors of the form field
    * @param name Field name to update
@@ -81,10 +47,49 @@ export type FormRef = {
   formState: FormState<any>;
 
   /**
+   * Returns current form values
+   */
+  getValues: <TFieldValues>() => TFieldValues;
+
+  /**
+   * Programmatically trigger form submit, receiving results in a promise
+   */
+  handleSubmit: <TFieldValues extends FieldValues>() => Promise<
+    [FieldErrors, null] | [null, TFieldValues]
+  >;
+
+  /**
    * Programmatically trigger form reset
    */
   reset: () => void;
+
+  /**
+   * Sets value of the form field
+   * @param name Field name to update
+   * @param value New field value
+   */
+  setValue: (name: FormFieldName, value: any) => void;
+
+  /**
+   * Programmatically trigger form submit
+   */
+  submit: () => void;
 };
+
+/**
+ * Successful form submit data
+ */
+export type FormSubmit<TSchema extends AnyZodObject> = z.output<TSchema>;
+
+/**
+ * Erroneous form submit data
+ */
+export type FormSubmitError<TSchema extends AnyZodObject> = FieldErrors<z.output<TSchema>>;
+
+/**
+ * Type alias for any Zod object schema (replaces removed AnyZodObject in Zod 4)
+ */
+type AnyZodObject = ZodObject<any>;
 
 /**
  * Returns form data based on provided shape
@@ -92,11 +97,6 @@ export type FormRef = {
  */
 export const createForm = <TSchema extends Record<string, any>>(shape: TSchema) => {
   return {
-    /**
-     * Form schema constraints
-     */
-    schema: z.object(shape),
-
     /**
      * Form fields descriptors
      */
@@ -108,27 +108,15 @@ export const createForm = <TSchema extends Record<string, any>>(shape: TSchema) 
       },
       {} as Record<string, string>,
     ) as Record<keyof TSchema, FormFieldName>,
+
+    /**
+     * Form schema constraints
+     */
+    schema: z.object(shape),
   };
 };
 
-type Props<TSchema extends ZodObject<any>> = Omit<ComponentPropsWithoutRef<'form'>, 'onSubmit'> & {
-  /**
-   * Form validation mode
-   * @default {'onBlur'}
-   */
-  validationMode?: keyof ValidationMode;
-
-  /**
-   * Revalidation mode (e.g. after first submit event)
-   * @default {'onChange'}
-   */
-  revalidationMode?: Exclude<keyof ValidationMode, 'onTouched' | 'all'>;
-
-  /**
-   * Form schema constraint
-   */
-  schema: TSchema;
-
+type Props<TSchema extends AnyZodObject> = {
   /**
    * Form children elements
    */
@@ -140,15 +128,23 @@ type Props<TSchema extends ZodObject<any>> = Omit<ComponentPropsWithoutRef<'form
   defaultValues?: z.input<TSchema>;
 
   /**
-   * Unique test identifier
-   */
-  testID: string;
-
-  /**
    * Metric goal type to emit based on user action
    * If omitted, reach goal metric will not be sent
    */
   metricGoal?: string;
+
+  /**
+   * Form state change event callback
+   * @param values Form values currently filled in
+   * @param event Base form change event
+   */
+  onChange?: (values: Partial<FormSubmit<TSchema>>, event?: BaseSyntheticEvent) => void;
+
+  /**
+   * Form valid state change event handler
+   * @param valid Current valid state
+   */
+  onChangeValidState?: (valid: boolean) => void;
 
   /**
    * Successful form submit event callback
@@ -165,18 +161,27 @@ type Props<TSchema extends ZodObject<any>> = Omit<ComponentPropsWithoutRef<'form
   onSubmitError?: (errors: FormSubmitError<TSchema>, event?: BaseSyntheticEvent) => void;
 
   /**
-   * Form state change event callback
-   * @param values Form values currently filled in
-   * @param event Base form change event
+   * Revalidation mode (e.g. after first submit event)
+   * @default {'onChange'}
    */
-  onChange?: (values: Partial<FormSubmit<TSchema>>, event?: BaseSyntheticEvent) => void;
+  revalidationMode?: Exclude<keyof ValidationMode, 'all' | 'onTouched'>;
 
   /**
-   * Form valid state change event handler
-   * @param valid Current valid state
+   * Form schema constraint
    */
-  onChangeValidState?: (valid: boolean) => void;
-};
+  schema: TSchema;
+
+  /**
+   * Unique test identifier
+   */
+  testID: string;
+
+  /**
+   * Form validation mode
+   * @default {'onBlur'}
+   */
+  validationMode?: keyof ValidationMode;
+} & Omit<ComponentPropsWithoutRef<'form'>, 'onSubmit'>;
 
 /**
  * Displays generic form, emitting form context with provided constraints
@@ -185,16 +190,17 @@ export const Form = forwardRef<FormRef, Props<any>>(
   (
     {
       children,
-      schema,
-      validationMode = 'onBlur',
-      revalidationMode = 'onChange',
       defaultValues,
-      testID,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       metricGoal,
-      onSubmit,
-      onSubmitError,
       onChange,
       onChangeValidState,
+      onSubmit,
+      onSubmitError,
+      revalidationMode = 'onChange',
+      schema,
+      testID,
+      validationMode = 'onBlur',
       ...props
     },
     ref,
@@ -202,35 +208,37 @@ export const Form = forwardRef<FormRef, Props<any>>(
     const formRef = useRef<HTMLFormElement>(null);
 
     const form = useForm({
-      resolver: zodResolver(schema),
       defaultValues,
       mode: validationMode,
+      resolver: zodResolver(schema),
       reValidateMode: revalidationMode,
     });
 
     const validRef = useRef(form.formState.isValid);
 
+    const handleSubmit = () =>
+      new Promise((resolve) =>
+        form.handleSubmit(
+          (values) => resolve([null, values as any]),
+          (errors) => resolve([errors, null]),
+        )(),
+      );
+
     useImperativeHandle(
       ref,
       () =>
         ({
+          clearErrors: (...fieldNames: FormFieldName[]) => form.clearErrors(fieldNames),
+          formState: form.formState,
+          getValues: () => form.getValues(),
+          handleSubmit: handleSubmit,
+          reset: form.reset,
+          setValue: (name: FormFieldName, value: any) => form.setValue(name, value),
           submit: () => {
             formRef.current?.dispatchEvent(
-              new Event('submit', { cancelable: true, bubbles: true }),
+              new Event('submit', { bubbles: true, cancelable: true }),
             );
           },
-          getValues: () => form.getValues(),
-          setValue: (name: FormFieldName, value: any) => form.setValue(name, value),
-          clearErrors: (...fieldNames: FormFieldName[]) => form.clearErrors(fieldNames),
-          handleSubmit: () =>
-            new Promise((resolve) =>
-              form.handleSubmit(
-                (values) => resolve([null, values as any]),
-                (errors) => resolve([errors, null]),
-              )(),
-            ),
-          formState: form.formState,
-          reset: form.reset,
         }) as FormRef,
     );
 
@@ -255,20 +263,20 @@ export const Form = forwardRef<FormRef, Props<any>>(
       <FormProvider {...form}>
         <form
           {...props}
-          onChange={handleFormChange}
-          ref={formRef}
           data-qa={testID}
+          noValidate
+          onChange={handleFormChange}
           onSubmit={form.handleSubmit(
             (values, event) => onSubmit(values, event, form),
             onSubmitError,
           )}
-          noValidate
+          ref={formRef}
         >
           {children}
         </form>
       </FormProvider>
     );
   },
-) as <TSchema extends AnyZodObject>(p: Props<TSchema> & { ref?: Ref<FormRef> }) => ReactElement;
+) as <TSchema extends AnyZodObject>(p: { ref?: Ref<FormRef> } & Props<TSchema>) => ReactElement;
 
 (Form as FC).displayName = 'Form';

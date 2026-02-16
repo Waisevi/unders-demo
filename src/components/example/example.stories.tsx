@@ -1,10 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Example } from './example';
 import { http, HttpResponse } from 'msw';
 
+import { Example } from './example';
+
+import type { Meta, StoryObj } from '@storybook/react';
+
 const meta: Meta<typeof Example> = {
-  title: 'Components/Box',
   component: Example,
+  title: 'Components/Box',
 };
 
 export default meta;
