@@ -1,6 +1,7 @@
 'use client';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import LogoutIcon from '@mui/icons-material/Logout';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import {
   AppBar,
@@ -23,6 +24,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { useCabinetAuth } from '@/hooks/use-cabinet-auth';
 
 // ============================================================
@@ -112,11 +115,13 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 
 const CabinetRatingPage = () => {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useCabinetAuth();
+  const { isAuthenticated, isLoading, logout } = useCabinetAuth();
 
   const today = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(today);
   const [sortKey, setSortKey] = useState<SortKey>('full_name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isTableLoading, setIsTableLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -124,16 +129,122 @@ const CabinetRatingPage = () => {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsTableLoading(false), 700);
+    return () => clearTimeout(timeout);
+  }, []);
+
   const sorted = useMemo(
     () =>
       MOCK_STATS.toSorted((a, b) => {
         const av = a[sortKey];
         const bv = b[sortKey];
-        if (typeof av === 'string') return (av as string).localeCompare(bv as string);
-        return (bv as number) - (av as number);
+        if (typeof av === 'string') {
+          const result = (av as string).localeCompare(bv as string);
+          return sortOrder === 'asc' ? result : -result;
+        }
+        const result = (av as number) - (bv as number);
+        return sortOrder === 'asc' ? result : -result;
       }),
-    [sortKey],
+    [sortKey, sortOrder],
   );
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortKey(key);
+    setSortOrder(key === 'full_name' ? 'asc' : 'desc');
+  };
+
+  const renderTableContent = () => {
+    if (isTableLoading) {
+      return (
+        <Box p={2}>
+          <TableSkeleton cols={10} rows={6} />
+        </Box>
+      );
+    }
+
+    if (sorted.length === 0) {
+      return (
+        <Box p={2}>
+          <EmptyState
+            description='Измените параметры фильтрации, чтобы отобразить статистику.'
+            title='Нет данных для таблицы'
+          />
+        </Box>
+      );
+    }
+
+    return (
+      <Table size='small' stickyHeader>
+        <TableHead>
+          <TableRow sx={{ bgcolor: 'grey.100' }}>
+            {COLUMNS.map(({ key, label }) => {
+              const isCurrentSort = sortKey === key;
+              const iconRotation =
+                isCurrentSort && sortOrder === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)';
+
+              return (
+                <TableCell
+                  key={key}
+                  onClick={() => handleSort(key)}
+                  sx={{
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    userSelect: 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Box alignItems='center' display='flex' gap={0.5}>
+                    {label}
+                    <UnfoldMoreIcon
+                      sx={{
+                        fontSize: 14,
+                        opacity: isCurrentSort ? 1 : 0.3,
+                        transform: iconRotation,
+                        transition: 'transform 0.2s ease',
+                      }}
+                    />
+                  </Box>
+                </TableCell>
+              );
+            })}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sorted.map((row) => (
+            <TableRow hover key={row.full_name}>
+              <TableCell>{row.full_name}</TableCell>
+              <TableCell>{row.all}</TableCell>
+              <TableCell>
+                {row.approved_all} ({pct(row.approved_all, row.all)}%)
+              </TableCell>
+              <TableCell>
+                {row.rejected_all} ({pct(row.rejected_all, row.all)}%)
+              </TableCell>
+              <TableCell>{row.all_new}</TableCell>
+              <TableCell>
+                {row.approved_new} ({pct(row.approved_new, row.all_new)}%)
+              </TableCell>
+              <TableCell>
+                {row.rejected_new} ({pct(row.rejected_new, row.all_new)}%)
+              </TableCell>
+              <TableCell>{row.all_repeated}</TableCell>
+              <TableCell>
+                {row.approved_repeated} ({pct(row.approved_repeated, row.all_repeated)}%)
+              </TableCell>
+              <TableCell>
+                {row.rejected_repeated} ({pct(row.rejected_repeated, row.all_repeated)}%)
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -144,9 +255,9 @@ const CabinetRatingPage = () => {
   }
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
-      <AppBar elevation={1} position='static'>
-        <Toolbar>
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
+      <AppBar elevation={0} position='static'>
+        <Toolbar sx={{ flexWrap: 'wrap', gap: 1, py: 1 }}>
           <Button
             color='inherit'
             component={Link}
@@ -156,15 +267,25 @@ const CabinetRatingPage = () => {
           >
             Назад
           </Button>
-          <Typography fontWeight={700} sx={{ flexGrow: 1 }} variant='h6'>
+          <Typography fontWeight={700} sx={{ flexGrow: 1, letterSpacing: '0.2px' }} variant='h6'>
             Статистика по обработанным заявкам
           </Typography>
+          <Button
+            color='inherit'
+            onClick={() => {
+              logout();
+              router.replace('/cabinet/login');
+            }}
+            startIcon={<LogoutIcon />}
+          >
+            Выйти
+          </Button>
         </Toolbar>
       </AppBar>
 
       <Container maxWidth='xl' sx={{ py: 3 }}>
         <Paper sx={{ borderRadius: 2, mb: 3, p: 3 }}>
-          <Box alignItems='center' display='flex' gap={2}>
+          <Box alignItems='center' display='flex' flexWrap='wrap' gap={2}>
             <Typography variant='body1'>Дата:</Typography>
             <TextField
               onChange={(e) => setDate(e.target.value)}
@@ -177,57 +298,7 @@ const CabinetRatingPage = () => {
         </Paper>
 
         <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-          <Table size='small'>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                {COLUMNS.map(({ key, label }) => (
-                  <TableCell
-                    key={key}
-                    onClick={() => setSortKey(key)}
-                    sx={{
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      userSelect: 'none',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <Box alignItems='center' display='flex' gap={0.5}>
-                      {label}
-                      <UnfoldMoreIcon sx={{ fontSize: 14, opacity: sortKey === key ? 1 : 0.3 }} />
-                    </Box>
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sorted.map((row) => (
-                <TableRow hover key={row.full_name}>
-                  <TableCell>{row.full_name}</TableCell>
-                  <TableCell>{row.all}</TableCell>
-                  <TableCell>
-                    {row.approved_all} ({pct(row.approved_all, row.all)}%)
-                  </TableCell>
-                  <TableCell>
-                    {row.rejected_all} ({pct(row.rejected_all, row.all)}%)
-                  </TableCell>
-                  <TableCell>{row.all_new}</TableCell>
-                  <TableCell>
-                    {row.approved_new} ({pct(row.approved_new, row.all_new)}%)
-                  </TableCell>
-                  <TableCell>
-                    {row.rejected_new} ({pct(row.rejected_new, row.all_new)}%)
-                  </TableCell>
-                  <TableCell>{row.all_repeated}</TableCell>
-                  <TableCell>
-                    {row.approved_repeated} ({pct(row.approved_repeated, row.all_repeated)}%)
-                  </TableCell>
-                  <TableCell>
-                    {row.rejected_repeated} ({pct(row.rejected_repeated, row.all_repeated)}%)
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {renderTableContent()}
         </TableContainer>
       </Container>
     </Box>

@@ -21,22 +21,22 @@
   --animate-*: initial;
 
   /* Colors */
-	--color-primary: #00BDAF;
-  --color-primaryDark: rgba(0,189,175,0.6);
+	--color-primary: #8F7ADB;
+  --color-primaryDark: #7664C3;
   --color-primaryContrastText: #ffffff;
-  --color-secondary: #00bfa5;
+  --color-secondary: #B39DFF;
   --color-secondaryDark: rgba(0, 0, 0, 0.87);
-  --color-accent: #00A091;
-  --color-background: #ffffff;
-  --color-surface: #f5f5f5;
-  --color-tableSurface: #fafafa;
+  --color-accent: #6F5AB6;
+  --color-background: #F6F4FD;
+  --color-surface: #FFFFFF;
+  --color-tableSurface: #F8F6FF;
   --color-textPrimary: #212121;
-  --color-textSecondary: #757575;
+  --color-textSecondary: #6F6A83;
   --color-textMuted: rgba(0,0,0,0.54);
   --color-error: #d32f2f;
   --color-warning: #ed6c02;
   --color-success: #2e7d32;
-  --color-borderLight: #E6E8EB;
+  --color-borderLight: #E4DDF6;
 
   /* Spacing */
 	--spacing-none: 0;

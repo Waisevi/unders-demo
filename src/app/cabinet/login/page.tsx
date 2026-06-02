@@ -30,7 +30,7 @@ const CabinetLoginPage = () => {
   return (
     <Box
       sx={{
-        bgcolor: '#f5f5f5',
+        bgcolor: 'background.default',
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
@@ -53,6 +53,7 @@ const CabinetLoginPage = () => {
 
           <form onSubmit={handleSubmit}>
             <TextField
+              autoComplete='username'
               autoFocus
               fullWidth
               label='Логин'
@@ -60,16 +61,19 @@ const CabinetLoginPage = () => {
                 setLoginValue(e.target.value);
                 setError('');
               }}
+              slotProps={{ inputLabel: { shrink: true } }}
               sx={{ mb: 2 }}
               value={loginValue}
             />
             <TextField
+              autoComplete='current-password'
               fullWidth
               label='Пароль'
               onChange={(e) => {
                 setPassword(e.target.value);
                 setError('');
               }}
+              slotProps={{ inputLabel: { shrink: true } }}
               sx={{ mb: error ? 2 : 3 }}
               type='password'
               value={password}

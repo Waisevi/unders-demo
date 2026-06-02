@@ -1,9 +1,11 @@
 'use client';
 
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CoffeeIcon from '@mui/icons-material/Coffee';
 import LogoutIcon from '@mui/icons-material/Logout';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import {
   Alert,
   AppBar,
@@ -13,7 +15,9 @@ import {
   CircularProgress,
   Container,
   Divider,
+  InputAdornment,
   Paper,
+  Skeleton,
   Stack,
   Table,
   TableBody,
@@ -26,8 +30,10 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
 import { useCabinetAuth } from '@/hooks/use-cabinet-auth';
 
 // ============================================================
@@ -103,14 +109,25 @@ const CabinetPage = () => {
   const [inWork, setInWork] = useState(false);
   const [searchId, setSearchId] = useState('');
   const [searchedId, setSearchedId] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [clientText, setClientText] = useState('');
   const [textSaved, setTextSaved] = useState(false);
+  const searchTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.replace('/cabinet/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(
+    () => () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -122,17 +139,24 @@ const CabinetPage = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearchedId(searchId);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    setIsSearching(true);
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearchedId(searchId);
+      setIsSearching(false);
+    }, 650);
   };
 
   const clientFound = searchedId === MOCK_CLIENT_ID;
 
   return (
-    <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh' }}>
       {/* Header */}
-      <AppBar elevation={1} position='static'>
-        <Toolbar>
-          <Typography fontWeight={700} sx={{ flexGrow: 1 }} variant='h6'>
+      <AppBar elevation={0} position='static'>
+        <Toolbar sx={{ flexWrap: 'wrap', gap: 1, py: 1 }}>
+          <Typography fontWeight={700} sx={{ flexGrow: 1, letterSpacing: '0.2px' }} variant='h6'>
             Андеррайтинг — Личный кабинет
           </Typography>
           <Button
@@ -158,9 +182,14 @@ const CabinetPage = () => {
       </AppBar>
 
       <Container maxWidth='lg' sx={{ py: 3 }}>
-        <Box alignItems='flex-start' display='flex' gap={3}>
+        <Box
+          alignItems='flex-start'
+          display='flex'
+          flexDirection={{ md: 'row', xs: 'column' }}
+          gap={3}
+        >
           {/* ===== LEFT COLUMN ===== */}
-          <Box sx={{ flexShrink: 0, width: 300 }}>
+          <Box sx={{ flexShrink: 0, width: { md: 300, xs: '100%' } }}>
             {/* Greeting */}
             <Paper sx={{ borderRadius: 2, mb: 2, p: 3 }}>
               <Typography fontWeight={600} variant='h6'>
@@ -178,26 +207,26 @@ const CabinetPage = () => {
             <Paper sx={{ borderRadius: 2, mb: 2, p: 3 }}>
               <Stack direction='row' mb={2} spacing={1}>
                 <Button
-                  color='success'
+                  color='primary'
                   fullWidth
                   onClick={() => setActive(true)}
-                  startIcon={<CheckCircleIcon />}
+                  startIcon={<TaskAltIcon />}
                   variant={active ? 'contained' : 'outlined'}
                 >
                   Готов!
                 </Button>
                 <Button
-                  color='warning'
+                  color='secondary'
                   fullWidth
                   onClick={() => setActive(false)}
-                  startIcon={<CoffeeIcon />}
+                  startIcon={<PauseCircleOutlineIcon />}
                   variant={active ? 'outlined' : 'contained'}
                 >
                   Перерыв
                 </Button>
               </Stack>
               <Chip
-                color={active ? 'success' : 'warning'}
+                color={active ? 'primary' : 'secondary'}
                 label={active ? 'Принимаю заявки' : 'На перерыве'}
                 size='small'
                 variant='outlined'
@@ -249,7 +278,11 @@ const CabinetPage = () => {
                   <Chip color='primary' label='В работе' />
                 ) : (
                   <Stack direction='row' spacing={1}>
-                    <Button onClick={() => setInWork(true)} variant='contained'>
+                    <Button
+                      onClick={() => setInWork(true)}
+                      startIcon={<AssignmentTurnedInIcon />}
+                      variant='contained'
+                    >
                       Взять в работу!
                     </Button>
                     <Button variant='outlined'>Отложить</Button>
@@ -264,16 +297,27 @@ const CabinetPage = () => {
                 Поиск клиента
               </Typography>
               <form onSubmit={handleSearch}>
-                <Stack alignItems='center' direction='row' spacing={2}>
+                <Stack alignItems='center' direction={{ sm: 'row', xs: 'column' }} spacing={2}>
                   <TextField
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position='start'>
+                          <PersonSearchIcon color='disabled' />
+                        </InputAdornment>
+                      ),
+                    }}
                     label='ID клиента'
                     onChange={(e) => setSearchId(e.target.value.replaceAll(/\D/g, '').slice(0, 8))}
                     placeholder='12345678'
-                    size='small'
                     sx={{ flexGrow: 1 }}
                     value={searchId}
                   />
-                  <Button disabled={!searchId} type='submit' variant='contained'>
+                  <Button
+                    disabled={!searchId}
+                    sx={{ width: { sm: 'auto', xs: '100%' } }}
+                    type='submit'
+                    variant='contained'
+                  >
                     Найти
                   </Button>
                 </Stack>
@@ -284,41 +328,66 @@ const CabinetPage = () => {
             </Paper>
 
             {/* Search results */}
-            {searchedId && !clientFound && (
-              <Alert severity='warning' sx={{ mb: 2 }}>
-                Клиент {searchedId} не найден. Введите 12345678 для демо.
-              </Alert>
+            {isSearching && (
+              <Paper sx={{ borderRadius: 2, mb: 2, p: 3 }}>
+                <Skeleton height={28} width='35%' />
+                <Skeleton height={42} sx={{ mt: 1.5 }} />
+                <Box sx={{ mt: 1.5 }}>
+                  <TableSkeleton cols={5} rows={3} />
+                </Box>
+              </Paper>
             )}
 
-            {clientFound && (
+            {!isSearching && searchedId && !clientFound && (
+              <EmptyState
+                actionLabel='Сбросить поиск'
+                description={`Клиент ${searchedId} не найден. Введите 12345678 для демо-данных.`}
+                onAction={() => {
+                  setSearchId('');
+                  setSearchedId('');
+                }}
+                title='Ничего не найдено'
+              />
+            )}
+
+            {!isSearching && clientFound && (
               <>
                 {/* FSSP Claims */}
                 <Paper sx={{ borderRadius: 2, mb: 2, p: 3 }}>
                   <Typography fontWeight={600} mb={2} variant='subtitle1'>
                     Исполнительные производства (ФССП)
                   </Typography>
-                  <Table size='small'>
-                    <TableHead>
-                      <TableRow>
-                        {['ФИО', 'Производство', 'Предмет', 'Взыскатель', 'Сумма'].map((h) => (
-                          <TableCell key={h} sx={{ fontWeight: 600 }}>
-                            {h}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {MOCK_CLAIMS.map((c, i) => (
-                        <TableRow key={i}>
-                          <TableCell>{c.name}</TableCell>
-                          <TableCell>{c.production}</TableCell>
-                          <TableCell>{c.subject}</TableCell>
-                          <TableCell>{c.details}</TableCell>
-                          <TableCell>{c.sum}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  {MOCK_CLAIMS.length === 0 ? (
+                    <EmptyState
+                      description='Для выбранного клиента нет исполнительных производств.'
+                      title='Таблица пока пустая'
+                    />
+                  ) : (
+                    <Box sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                      <Table size='small'>
+                        <TableHead>
+                          <TableRow>
+                            {['ФИО', 'Производство', 'Предмет', 'Взыскатель', 'Сумма'].map((h) => (
+                              <TableCell key={h} sx={{ fontWeight: 600 }}>
+                                {h}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {MOCK_CLAIMS.map((c, i) => (
+                            <TableRow key={i}>
+                              <TableCell>{c.name}</TableCell>
+                              <TableCell>{c.production}</TableCell>
+                              <TableCell>{c.subject}</TableCell>
+                              <TableCell>{c.details}</TableCell>
+                              <TableCell>{c.sum}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </Box>
+                  )}
                 </Paper>
 
                 {/* Passport checks */}

@@ -3,13 +3,18 @@
 
 html,
 body {
-  margin: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   font-family: "Roboto", sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   height: 100%;
-  background-color: #eaeaea;
+  background-color: #f1ecfb;
   backface-visibility: hidden;
+}
+
+body > div:first-child {
+  min-height: 100%;
 }
 
 [role="app"] {
