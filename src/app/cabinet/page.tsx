@@ -101,7 +101,6 @@ const checkLabel = (status: string) => {
   return 'Сервис недоступен';
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 const CabinetPage = () => {
   const router = useRouter();
   const { isAuthenticated, isLoading, logout } = useCabinetAuth();
@@ -275,16 +274,19 @@ const CabinetPage = () => {
                     Одобрено, нужна идентификация
                   </Alert>
                 )}
-                <Typography mb={2} variant='h6'>
-                  {MOCK_APPLICATION.client}
-                </Typography>
+                <Stack alignItems='center' direction='row' flexWrap='wrap' gap={1} mb={2}>
+                  <Typography variant='h6'>{MOCK_APPLICATION.client}</Typography>
+                  {inWork && (
+                    <Chip
+                      color={isPostponed ? 'warning' : 'primary'}
+                      label={isPostponed ? 'Отложена' : 'В работе'}
+                      size='small'
+                    />
+                  )}
+                </Stack>
                 {inWork ? (
                   <>
                     <Stack alignItems='center' direction='row' flexWrap='wrap' gap={1} mb={1.5}>
-                      <Chip
-                        color={isPostponed ? 'secondary' : 'primary'}
-                        label={isPostponed ? 'Отложена' : 'В работе'}
-                      />
                       {isPostponed ? (
                         <Button
                           onClick={() => setIsPostponed(false)}
