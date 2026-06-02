@@ -26,7 +26,17 @@ export const muiTheme = createMuiTheme({
           borderRadius: '10px',
           textTransform: 'none',
         },
+        containedSecondary: {
+          '&:hover': {
+            backgroundColor: vars.color.primaryDark,
+          },
+          color: vars.color.primaryContrastText,
+        },
         outlined: {
+          '&:hover': {
+            backgroundColor: 'rgba(143, 122, 219, 0.06)',
+            borderColor: vars.color.primaryDark,
+          },
           borderColor: vars.color.borderLight,
           borderRadius: '10px',
           textTransform: 'none',

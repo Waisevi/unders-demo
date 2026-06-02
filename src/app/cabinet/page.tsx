@@ -101,6 +101,7 @@ const checkLabel = (status: string) => {
   return 'Сервис недоступен';
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 const CabinetPage = () => {
   const router = useRouter();
   const { isAuthenticated, isLoading, logout } = useCabinetAuth();
@@ -116,6 +117,7 @@ const CabinetPage = () => {
   const [workNote, setWorkNote] = useState('');
   const [workNoteSaved, setWorkNoteSaved] = useState(false);
   const searchTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null);
+  const isOnBreak = !active;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -229,10 +231,15 @@ const CabinetPage = () => {
                 </Button>
               </Stack>
               <Chip
-                color={active ? 'primary' : 'secondary'}
                 label={active ? 'Принимаю заявки' : 'На перерыве'}
                 size='small'
-                variant='outlined'
+                sx={{
+                  bgcolor: active ? 'rgba(46, 125, 50, 0.14)' : 'rgba(237, 108, 2, 0.14)',
+                  border: '1px solid',
+                  borderColor: active ? 'rgba(46, 125, 50, 0.28)' : 'rgba(237, 108, 2, 0.28)',
+                  color: active ? 'success.dark' : 'warning.dark',
+                  fontWeight: 600,
+                }}
               />
             </Paper>
 
@@ -264,7 +271,24 @@ const CabinetPage = () => {
           {/* ===== RIGHT COLUMN ===== */}
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
             {/* Current application */}
-            <Paper sx={{ borderRadius: 2, mb: 2, p: 3 }}>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                mb: 2,
+                opacity: isOnBreak ? 0.6 : 1,
+                p: 3,
+                pointerEvents: isOnBreak ? 'none' : 'auto',
+                position: 'relative',
+              }}
+            >
+              {isOnBreak && (
+                <Chip
+                  color='warning'
+                  label='Недоступно на перерыве'
+                  size='small'
+                  sx={{ position: 'absolute', right: 16, top: 16 }}
+                />
+              )}
               <Typography fontWeight={600} mb={2} variant='subtitle1'>
                 Текущая заявка
               </Typography>
@@ -278,9 +302,19 @@ const CabinetPage = () => {
                   <Typography variant='h6'>{MOCK_APPLICATION.client}</Typography>
                   {inWork && (
                     <Chip
-                      color={isPostponed ? 'warning' : 'primary'}
                       label={isPostponed ? 'Отложена' : 'В работе'}
                       size='small'
+                      sx={{
+                        bgcolor: isPostponed
+                          ? 'rgba(237, 108, 2, 0.14)'
+                          : 'rgba(143, 122, 219, 0.16)',
+                        border: '1px solid',
+                        borderColor: isPostponed
+                          ? 'rgba(237, 108, 2, 0.28)'
+                          : 'rgba(143, 122, 219, 0.32)',
+                        color: isPostponed ? 'warning.dark' : 'primary.dark',
+                        fontWeight: 600,
+                      }}
                     />
                   )}
                 </Stack>
@@ -351,7 +385,24 @@ const CabinetPage = () => {
             </Paper>
 
             {/* Client search */}
-            <Paper sx={{ borderRadius: 2, mb: 2, p: 3 }}>
+            <Paper
+              sx={{
+                borderRadius: 2,
+                mb: 2,
+                opacity: isOnBreak ? 0.6 : 1,
+                p: 3,
+                pointerEvents: isOnBreak ? 'none' : 'auto',
+                position: 'relative',
+              }}
+            >
+              {isOnBreak && (
+                <Chip
+                  color='warning'
+                  label='Поиск недоступен на перерыве'
+                  size='small'
+                  sx={{ position: 'absolute', right: 16, top: 16 }}
+                />
+              )}
               <Typography fontWeight={600} mb={2} variant='subtitle1'>
                 Поиск клиента
               </Typography>
