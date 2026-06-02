@@ -101,17 +101,21 @@ const checkLabel = (status: string) => {
   return 'Сервис недоступен';
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 const CabinetPage = () => {
   const router = useRouter();
   const { isAuthenticated, isLoading, logout } = useCabinetAuth();
 
   const [active, setActive] = useState(true);
   const [inWork, setInWork] = useState(false);
+  const [isPostponed, setIsPostponed] = useState(false);
   const [searchId, setSearchId] = useState('');
   const [searchedId, setSearchedId] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [clientText, setClientText] = useState('');
   const [textSaved, setTextSaved] = useState(false);
+  const [workNote, setWorkNote] = useState('');
+  const [workNoteSaved, setWorkNoteSaved] = useState(false);
   const searchTimeoutRef = useRef<null | ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
@@ -275,11 +279,64 @@ const CabinetPage = () => {
                   {MOCK_APPLICATION.client}
                 </Typography>
                 {inWork ? (
-                  <Chip color='primary' label='В работе' />
+                  <>
+                    <Stack alignItems='center' direction='row' flexWrap='wrap' gap={1} mb={1.5}>
+                      <Chip
+                        color={isPostponed ? 'secondary' : 'primary'}
+                        label={isPostponed ? 'Отложена' : 'В работе'}
+                      />
+                      {isPostponed ? (
+                        <Button
+                          onClick={() => setIsPostponed(false)}
+                          size='small'
+                          variant='outlined'
+                        >
+                          Вернуть в работу
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => setIsPostponed(true)}
+                          size='small'
+                          variant='outlined'
+                        >
+                          Отложить
+                        </Button>
+                      )}
+                    </Stack>
+                    <TextField
+                      fullWidth
+                      multiline
+                      onChange={(e) => {
+                        setWorkNote(e.target.value);
+                        setWorkNoteSaved(false);
+                      }}
+                      placeholder='Добавьте пометку по заявке...'
+                      rows={2}
+                      sx={{ mb: 1 }}
+                      value={workNote}
+                    />
+                    {workNoteSaved ? (
+                      <Typography color='success.main' variant='caption'>
+                        Пометка сохранена
+                      </Typography>
+                    ) : (
+                      <Button
+                        disabled={!workNote.trim()}
+                        onClick={() => setWorkNoteSaved(true)}
+                        size='small'
+                        variant='contained'
+                      >
+                        Сохранить пометку
+                      </Button>
+                    )}
+                  </>
                 ) : (
                   <Stack direction='row' spacing={1}>
                     <Button
-                      onClick={() => setInWork(true)}
+                      onClick={() => {
+                        setInWork(true);
+                        setIsPostponed(false);
+                      }}
                       startIcon={<AssignmentTurnedInIcon />}
                       variant='contained'
                     >
